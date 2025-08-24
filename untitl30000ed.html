@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xan Mağaza</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f2f6fc; }
+    header { background: linear-gradient(to right,#000,#007bff); color: #fff; padding: 15px; text-align: center; font-size: 22px; font-weight: bold; position: relative; }
+    header .logout { position: absolute; right: 10px; top: 10px; cursor: pointer; font-size: 18px; }
+    .container { padding: 20px; }
+    .hidden { display: none; }
+    .form-box { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin: 30px auto; width: 90%; max-width: 400px; }
+    input, select, button, textarea { width: 100%; padding: 10px; margin: 6px 0; border-radius: 6px; border: 1px solid #ccc; }
+    button { cursor: pointer; font-weight: bold; }
+    .catalog { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .product { background: white; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: 0.3s; }
+    .product:hover { transform: translateY(-5px); }
+    .product img { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; }
+    .product h3 { font-size: 16px; margin: 6px 0; }
+    .price { font-weight: bold; margin: 5px 0; color: #28a745; }
+    .review-box { margin-top: 10px; }
+    nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #ccc; display: flex; }
+    nav button { flex: 1; padding: 12px; border: none; background: #fff; font-weight: bold; }
+    nav button.active { background: #007bff; color: white; }
+    .cart-item { background: #fff; margin: 10px 0; padding: 10px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.2); display: flex; gap: 10px; }
+    .cart-item img { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; }
+    .total { font-weight: bold; font-size: 18px; margin-top: 15px; }
+    .user-list { background: #fff; padding: 10px; border-radius: 6px; margin: 10px 0; }
+    .inactive { color: gray; }
+    .support { background: #fff; padding: 10px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <header>
+    Xan Mağaza
+    <span class="logout hidden" onclick="logout()">🚪 Çıxış</span>
+  </header>
+
+  <!-- Login -->
+  <div id="loginBox" class="form-box">
+    <h2>Daxil ol</h2>
+    <input type="text" id="loginUser" placeholder="Ad">
+    <input type="password" id="loginPass" placeholder="Şifrə">
+    <button onclick="login()">Giriş</button>
+    <p>Hesabınız yoxdur? <a href="#" onclick="showRegister()">Qeydiyyat</a></p>
+  </div>
+
+  <!-- Register -->
+  <div id="registerBox" class="form-box hidden">
+    <h2>Qeydiyyat</h2>
+    <input type="text" id="regUser" placeholder="Ad">
+    <input type="password" id="regPass" placeholder="Şifrə">
+    <button onclick="register()">Qeydiyyat</button>
+    <p>Artıq hesabınız var? <a href="#" onclick="showLogin()">Daxil ol</a></p>
+  </div>
+
+  <!-- Main -->
+  <div class="container hidden" id="mainPage">
+    <!-- Admin İşləri -->
+    <div id="adminPanel" class="hidden">
+      <h3>👑 Admin İşləri</h3>
+      <h4>Məhsul əlavə et</h4>
+      <input type="text" id="pName" placeholder="Məhsul adı">
+      <input type="number" id="pPrice" placeholder="Qiymət">
+      <input type="number" id="pDiscount" placeholder="Endirim (%)">
+      <textarea id="pDesc" placeholder="Açıqlama"></textarea>
+      <select id="pCat">
+        <option value="Kişi geyimləri">Kişi geyimləri</option>
+        <option value="Qadın geyimləri">Qadın geyimləri</option>
+        <option value="Uşaq geyimləri">Uşaq geyimləri</option>
+      </select>
+      <input type="file" id="pImg" accept="image/*">
+      <button onclick="addProduct()">Məhsul Əlavə Et</button>
+
+      <h4>İstifadəçilər</h4>
+      <div id="userList"></div>
+    </div>
+
+    <h2>🛍 Mağaza</h2>
+    <button onclick="showFilters()">⚙️ Ayarlar</button>
+    <div id="filterBox" class="hidden">
+      <input type="number" id="minPrice" placeholder="Min qiymət">
+      <input type="number" id="maxPrice" placeholder="Max qiymət">
+      <select id="catFilter">
+        <option value="">Hamısı</option>
+        <option value="Kişi geyimləri">Kişi geyimləri</option>
+        <option value="Qadın geyimləri">Qadın geyimləri</option>
+        <option value="Uşaq geyimləri">Uşaq geyimləri</option>
+      </select>
+      <button onclick="applyFilters()">Filtrlə</button>
+    </div>
+    <div class="catalog" id="catalog"></div>
+  </div>
+
+  <!-- Cart -->
+  <div class="container hidden" id="cartPage">
+    <h2>Səbətim</h2>
+    <div id="cartList"></div>
+    <div class="total">Ümumi məbləğ: <span id="totalPrice">0</span> M</div>
+    <button onclick="buyNow()">✅ Al</button>
+  </div>
+
+  <!-- Support -->
+  <div class="container hidden" id="supportPage">
+    <h2>📩 Dəstək</h2>
+    <div id="chatBox" class="support"></div>
+    <input type="text" id="chatInput" placeholder="Mesaj yaz...">
+    <button onclick="sendMsg()">Göndər</button>
+  </div>
+
+  <!-- Nav -->
+  <nav class="hidden" id="bottomNav">
+    <button onclick="showPage('mainPage')">👕 Mağaza</button>
+    <button onclick="showPage('cartPage')">🛒 Səbət</button>
+    <button onclick="showPage('supportPage')">💬 Dəstək</button>
+  </nav>
+
+<script>
+let users = JSON.parse(localStorage.getItem("users")) || [];
+let products = JSON.parse(localStorage.getItem("products")) || [];
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+let messages = JSON.parse(localStorage.getItem("messages")) || [];
+
+function saveUsers(){ localStorage.setItem("users",JSON.stringify(users)); }
+function saveProducts(){ localStorage.setItem("products",JSON.stringify(products)); }
+function saveCart(){ localStorage.setItem("cart",JSON.stringify(cart)); }
+function saveCurrent(){ localStorage.setItem("currentUser",JSON.stringify(currentUser)); }
+function saveMsgs(){ localStorage.setItem("messages",JSON.stringify(messages)); }
+
+// Auto login
+if(currentUser){ showMain(currentUser.admin); document.querySelector(".logout").classList.remove("hidden"); }
+
+// Register
+function showRegister(){ loginBox.classList.add("hidden"); registerBox.classList.remove("hidden"); }
+function showLogin(){ registerBox.classList.add("hidden"); loginBox.classList.remove("hidden"); }
+function register(){
+  let user=regUser.value.trim(), pass=regPass.value.trim();
+  if(user && pass){ users.push({name:user, pass:pass, active:true}); saveUsers(); alert("Qeydiyyat uğurlu!"); showLogin(); }
+}
+
+// Login
+function login(){
+  let user=loginUser.value.trim(), pass=loginPass.value.trim();
+  if(user==="Ziya11" && pass==="1122"){
+    currentUser={name:user,admin:true}; saveCurrent(); showMain(true); return;
+  }
+  let found=users.find(u=>u.name===user && u.pass===pass && u.active);
+  if(found){ currentUser={name:found.name,admin:false}; saveCurrent(); showMain(false); }
+  else alert("Yanlış məlumat və ya deaktiv hesab!");
+}
+function logout(){ currentUser=null; saveCurrent(); location.reload(); }
+
+function showMain(isAdmin){
+  loginBox.classList.add("hidden"); registerBox.classList.add("hidden");
+  mainPage.classList.remove("hidden"); bottomNav.classList.remove("hidden");
+  document.querySelector(".logout").classList.remove("hidden");
+  loadProducts(); if(isAdmin){ adminPanel.classList.remove("hidden"); loadUsers(); }
+}
+
+function loadProducts(){ displayProducts(products); }
+
+function displayProducts(list){
+  catalog.innerHTML="";
+  list.forEach((p,i)=>{
+    catalog.innerHTML+=`
+      <div class="product">
+        <img src="${p.img}">
+        <h3>${p.name}</h3>
+        <div class="price">${p.price} M ${p.discount>0?"<span>("+p.discount+"% endirim)</span>":""}</div>
+        <p>${p.desc}</p>
+        <button onclick="addToCart(${i})">🛒 Əlavə et</button>
+        <div class="review-box">
+          <input id="rev${i}" placeholder="Rəy yaz...">
+          <button onclick="addReview(${i})">Göndər</button>
+          <div>${p.reviews?p.reviews.join("<br>"):""}</div>
+        </div>
+      </div>`;
+  });
+}
+
+function addToCart(i){ cart.push(products[i]); saveCart(); loadCart(); }
+function addReview(i){
+  let txt=document.getElementById("rev"+i).value;
+  if(!txt) return;
+  if(!products[i].reviews) products[i].reviews=[];
+  products[i].reviews.push(currentUser.name+": "+txt);
+  saveProducts(); loadProducts();
+}
+
+// Cart
+function showPage(page){ mainPage.classList.add("hidden"); cartPage.classList.add("hidden"); supportPage.classList.add("hidden"); document.getElementById(page).classList.remove("hidden"); if(page==="cartPage") loadCart(); if(page==="supportPage") loadChat(); }
+function loadCart(){
+  cartList.innerHTML=""; let total=0;
+  cart.forEach((c,i)=>{ total+=c.price;
+    cartList.innerHTML+=`
+    <div class="cart-item">
+      <img src="${c.img}">
+      <div><h4>${c.name}</h4><div>${c.price} M</div>
+      <button onclick="removeFromCart(${i})">❌ Sil</button></div>
+    </div>`; });
+  totalPrice.innerText=total;
+}
+function removeFromCart(i){ cart.splice(i,1); saveCart(); loadCart(); }
+function buyNow(){
+  if(cart.length===0){ alert("Səbət boşdur!"); return; }
+  window.open("https://wa.me/994709971128?text=Salam","_blank");
+}
+
+// Admin İşləri
+function addProduct(){
+  let name=pName.value, price=+pPrice.value, disc=+pDiscount.value, desc=pDesc.value, cat=pCat.value;
+  let file=pImg.files[0];
+  if(!file){alert("Şəkil seçin!");return;}
+  let reader=new FileReader();
+  reader.onload=function(e){
+    products.push({name,price,discount:disc,desc,cat,img:e.target.result});
+    saveProducts(); loadProducts(); alert("Məhsul əlavə edildi!");
+  }
+  reader.readAsDataURL(file);
+}
+function loadUsers(){
+  userList.innerHTML="";
+  users.forEach((u,i)=>{
+    userList.innerHTML+=`
+    <div class="user-list ${!u.active?"inactive":""}">
+      ${u.name} | ${u.pass} | ${u.active?"Aktiv":"Passiv"}
+      <button onclick="toggleUser(${i})">${u.active?"Deaktiv":"Aktivləşdir"}</button>
+      <button onclick="deleteUser(${i})">Sil</button>
+    </div>`;
+  });
+}
+function toggleUser(i){ users[i].active=!users[i].active; saveUsers(); loadUsers(); }
+function deleteUser(i){ users.splice(i,1); saveUsers(); loadUsers(); }
+
+// Filters
+function showFilters(){ filterBox.classList.toggle("hidden"); }
+function applyFilters(){
+  let min=+minPrice.value||0, max=+maxPrice.value||999999, cat=catFilter.value;
+  let list=products.filter(p=>p.price>=min && p.price<=max && (!cat||p.cat===cat));
+  displayProducts(list);
+}
+
+// Support
+function loadChat(){
+  chatBox.innerHTML="";
+  messages.forEach(m=>{ chatBox.innerHTML+=`<div><b>${m.user}:</b> ${m.text}</div>`; });
+}
+function sendMsg(){
+  let txt=chatInput.value.trim(); if(!txt) return;
+  messages.push({user:currentUser.name,text:txt});
+  saveMsgs(); chatInput.value=""; loadChat();
+}
+</script>
+</body>
+</html>
